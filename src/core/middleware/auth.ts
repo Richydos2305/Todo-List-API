@@ -9,27 +9,24 @@ export interface UserPayload {
 		email: string;
 		id: number;
 	};
-	iat: number;
-	exp: number;
 }
 
 export const auth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	let token: string | undefined = req.header('Authorization');
     const prefix = 'Bearer ';
 	if (!token) {
-        handleError(res, 401, 'Token is missing');
+        handleError(res, 401, 'Unauthorized');
 	} else if (token.startsWith(prefix)) {
         token = token.slice(prefix.length);
 		try {
 			const payload = verify(token, settings.secretKey as Secret) as UserPayload;
-            console.log(verify(token, settings.secretKey as Secret));
 
 			res.locals = payload;
 			next();
 		} catch (error) {
             console.error(error)
 			next(error);
-            handleError(res, 401, 'Error when verifying the payload');
+            handleError(res, 401, 'Unauthorized');
 		}
 	}
 };
