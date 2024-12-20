@@ -1,48 +1,30 @@
-import { CreationOptional, DataTypes, ForeignKey, InferAttributes, InferCreationAttributes, Model } from 'sequelize';
-import { sequelizeConnection } from '../database/sequelize';
+import mongoose, { Schema, Document, Types } from 'mongoose';
 import { Task } from '../interfaces/models';
-import { Users } from './users';
 
-export class Tasks
-  extends Model<InferAttributes<Tasks>, InferCreationAttributes<Tasks, { omit: 'id' }>>
-  implements Task
-{
-  declare id: CreationOptional<number>;
+export interface ITask extends Task, Document {}
 
-  declare user_id: ForeignKey<number>;
-
-  declare title: string;
-
-  declare description: string;
-}
-
-Tasks.init(
+const TaskSchema: Schema = new Schema(
     {
-      id: {
-        type: DataTypes.INTEGER.UNSIGNED,
-        primaryKey: true,
-        autoIncrement: true,
-        allowNull: false
-      },
-      user_id: {
-        type: DataTypes.INTEGER.UNSIGNED,
-        allowNull: false,
-        references: {
-          model: Users,
-          key: 'id',
+        user_id: {
+            type: Schema.Types.ObjectId,
+            required: true,
+            ref: 'Users'
         },
-        onDelete: 'CASCADE'
-      },
-      title: {
-        type: DataTypes.STRING(50),
-        allowNull: false
-      },
-      description: {
-        type: DataTypes.STRING(225)
-      },
+        title: {
+            type: String,
+            required: true,
+            maxlength: 50,
+            trim: true,
+        },
+        description: {
+            type: String,
+            trim: true
+        },
     },
     {
-      tableName: 'tasks',
-      sequelize: sequelizeConnection
+        timestamps: true,
+        collection: 'tasks'
     }
-  );
+);
+
+export const Tasks = mongoose.model<ITask>('Task', TaskSchema);
