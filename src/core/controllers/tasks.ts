@@ -1,5 +1,5 @@
 import { Request, Response} from 'express';
-import { Tasks } from '../models/tasks';
+import { ITask, Tasks } from '../models/tasks';
 import { handleError, isAuthorizedUser, userExists } from '../helpers';
 
 export const create = async (req: Request, res: Response): Promise<void> => {
@@ -29,7 +29,7 @@ export const getOne = async ( req: Request, res: Response ): Promise<void> => {
         return handleError(res, 401, 'Unauthorized')
 	} else {
 		const id: string = req.params.id;
-        const task: Tasks | null = await Tasks.findOne({ where: { id } });
+        const task: ITask | null = await Tasks.findById(id);
 
 		if (task && isAuthorizedUser(task, res.locals.userDetails.id)) {
 				res.status(200).send({ title: task.title, description: task.description });
@@ -46,20 +46,17 @@ export const getAll = async ( req: Request, res: Response ): Promise<void> => {
         const limit: number = parseInt(req.query.limit as string) || 5;
         const offset: number = (page - 1) * limit;
 
-        const { rows: tasks, count } = await Tasks.findAndCountAll( {
-            where: { user_id: res.locals.userDetails.id },
-            attributes: [ 'id', 'title', 'description' ],
-            limit,
-            offset
-        });
+        const [data, total] = await Promise.all([
+                Tasks
+                .find({ user_id: res.locals.userDetails.id })
+                .select(['_id', 'title', 'description'])
+                .skip(offset)
+                .limit(limit),
+                Tasks.countDocuments({user_id: res.locals.userDetails.id}),
+        ]);
         
-		if (tasks.length > 0) {
-            const result = {
-                data: tasks,
-                page,
-                limit,
-                total: count
-            }
+		if (data.length > 0) {
+            const result = { data, page, limit, total }
             res.status(200).send(result);
             return;
 		} else {
@@ -76,7 +73,7 @@ export const update = async (req: Request, res: Response): Promise<void> => {
 
 	} else {
         const id: string = req.params.id;
-        let task: Tasks | null = await Tasks.findOne({ where: { id } });
+        let task: ITask | null = await Tasks.findById(id);        
 
         if (task && isAuthorizedUser(task, res.locals.userDetails.id)) {
             const title: string | undefined = req.body.title;
@@ -101,11 +98,11 @@ export const destroy = async (req: Request,res: Response): Promise<void> => {
 	} else {
 
         const id: string = req.params.id;
-        let task: Tasks | null = await Tasks.findOne({ where: { id } });
+        let task: ITask | null = await Tasks.findById(id);
 
         if (task && isAuthorizedUser(task, res.locals.userDetails.id)) {
 
-            await task.destroy()
+            await task.deleteOne()
 
             res.status(204).send();
             return;

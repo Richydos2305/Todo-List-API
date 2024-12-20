@@ -2,12 +2,13 @@ import {verify, Secret} from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 import { settings } from '../config/application';
 import { handleError } from '../helpers/index';
+import { Types } from 'mongoose';
 
 export interface UserPayload {
 	userDetails: {
 		username: string;
 		email: string;
-		id: number;
+		id: Types.ObjectId;
 	};
 }
 

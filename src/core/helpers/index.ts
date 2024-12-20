@@ -1,14 +1,15 @@
 import { Response } from 'express';
 import { settings } from '../config/application';
 import { sign } from 'jsonwebtoken';
-import { Tasks } from '../models/tasks';
+import { ITask, Tasks } from '../models/tasks';
 import { Users } from '../models/users';
+import { Types } from 'mongoose';
 
 export function handleError(res: Response, statusCode: number, message: string): void {
   res.status(statusCode).send({ message });
 }
 
-export function getAccessToken(user: {name: string, email: string, id: number}): string {
+export function getAccessToken(user: {name: string, email: string, id: Types.ObjectId}): string {
 
   const accessToken = sign(
     {
@@ -24,13 +25,13 @@ export function getAccessToken(user: {name: string, email: string, id: number}):
   return accessToken
 }
 
-export function isAuthorizedUser(task: Tasks, loggedInUserId: number ): boolean {
-  if (task.user_id === loggedInUserId)
+export function isAuthorizedUser(task: ITask, loggedInUserId: Types.ObjectId ): boolean {  
+  if (task.user_id.equals(loggedInUserId))
     return true
   return false
 }
-export async function userExists(loggedInUserId: number ): Promise<boolean> {
-  const loggedInUser = await Users.findOne({ where: { id:loggedInUserId } })
+export async function userExists(loggedInUserId: Types.ObjectId ): Promise<boolean> {
+  const loggedInUser = await Users.findById(loggedInUserId)
   if (loggedInUser)
     return true
   return false
