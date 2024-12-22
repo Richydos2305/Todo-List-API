@@ -54,3 +54,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         return handleError(res, 401, 'Email or Password is invalid')
 	}
 };
+
+export const welcome = async (req: Request, res: Response): Promise<void> => {
+    res.status(200).send('Welcome To Richard\'s Todo List API');
+    return;
+};
